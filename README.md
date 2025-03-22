@@ -13,7 +13,7 @@
 
 ### 1️⃣ Clone the Repository  
 ```sh
-git clone https://github.com/yourusername/zen-shell.git  
+git clone https://github.com/d3f4ult-dev/Zenshell  
 cd zen-shell  
 ```
 
