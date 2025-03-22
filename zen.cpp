@@ -10,12 +10,15 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <dlfcn.h>
+#include <unordered_map>
+#include <algorithm>
 
 #define MAX_INPUT 1024
 
 using namespace std;
 
 vector<string> active_plugins;
+unordered_map<string, string> theme_settings;
 
 void load_config() {
     ifstream config("~/.zencr/config");
@@ -25,16 +28,30 @@ void load_config() {
     }
     string line;
     while (getline(config, line)) {
-        if (!line.empty()) active_plugins.push_back(line);
+        if (line.rfind("plugin:", 0) == 0) {
+            active_plugins.push_back(line.substr(7));
+        } else if (line.rfind("theme:", 0) == 0) {
+            size_t delimiter = line.find('=');
+            if (delimiter != string::npos) {
+                theme_settings[line.substr(6, delimiter - 6)] = line.substr(delimiter + 1);
+            }
+        }
     }
     config.close();
+}
+
+void apply_theme() {
+    if (theme_settings.count("prompt_color")) {
+        cout << "\033[" << theme_settings["prompt_color"] << "m";
+    }
 }
 
 void print_prompt() {
     char *user = getenv("USER");
     char dir[MAX_INPUT];
     getcwd(dir, MAX_INPUT);
-    cout << "\033[1;34m" << (user ? user : "unknown") << "@" << dir << " -/\033[0m $ ";
+    apply_theme();
+    cout << (user ? user : "unknown") << "@" << dir << " -/ $ \033[0m";
     fflush(stdout);
 }
 
