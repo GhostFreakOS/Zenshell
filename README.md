@@ -8,6 +8,7 @@
 - **Theming Support**: Customize colors and prompt styles easily.  
 - **Zsh-like Power**: Autocompletion, syntax highlighting, and a powerful history system.  
 - **Built for Performance**: Optimized with modern C++ for speed and efficiency.  
+- **Lua plugins Support**: Add Lua Plugins Support 
 
 ## 📥 Installation  
 
@@ -39,13 +40,14 @@ The config file is located at `~/.zencr/config`. You can specify:
   ```  
 - **Theming options**:  
   ```ini  
-  theme:prompt_color=34  # Blue prompt  
+  theme:prompt_color=34  # Blue prompt  and choose colors with hex format 
   theme:background=black  
   ```  
 
 ## 🔌 Plugin System  
 
-Zen Shell supports dynamic plugins! Drop `.so` files into `~/.zencr/plugins/` and enable them in the config.  
+Zen Shell supports dynamic plugins! Drop `.so` files into `~/.zencr/plugins/` and enable them in the config.
+Zen Shell Also Support Lua programming luangauge in it   
 
 ## 🛠 Uninstallation  
 ```sh
