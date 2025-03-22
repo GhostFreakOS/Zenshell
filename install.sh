@@ -5,7 +5,7 @@ echo "Installing Zen Shell..."
 set +e # Disable exit on error
 
 # Install dependencies
-deps=("g++" "make" "libreadline-dev" "libdl" "liblua5.4-dev")
+deps=("g++" "make" "libreadline-dev" "readline-devel" "readline" "libdl" "liblua5.4-dev")
 for dep in "${deps[@]}"; do
     if ! dpkg -s $dep &>/dev/null && ! command -v $dep &>/dev/null; then
         echo "Installing dependency: $dep"
