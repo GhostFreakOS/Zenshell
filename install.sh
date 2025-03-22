@@ -16,7 +16,7 @@ for dep in "${deps[@]}"; do
         sudo xbps-install -y $dep &>/dev/null || \
         sudo zypper install -y $dep &>/dev/null || \
         sudo homebrew install $dep &>/dev/null || \
-        sudo pkg install -y $dep &>/dev/null || \
+        sudo pkg install -y $dep &>/dev/null
     fi
 done
 
