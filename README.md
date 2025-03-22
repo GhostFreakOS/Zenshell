@@ -13,8 +13,8 @@
 
 ### 1️⃣ Clone the Repository  
 ```sh
-git clone https://github.com/d3f4ult-dev/Zenshell  
-cd zen-shell  
+git clone https://github.com/D3f4ult-dev/Zenshell.git
+cd Zenshell
 ```
 
 ### 2️⃣ Run the Installer  
