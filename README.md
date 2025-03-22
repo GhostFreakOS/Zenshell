@@ -23,8 +23,8 @@ cd Zenshell
 
 ### 2. Compile & Install
 ```bash
-chmod +x install_zen.sh
-sudo ./install_zen.sh
+chmod +x install.sh
+sudo ./install.sh
 ```
 
 ### 3. Run Zen Shell
