@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <fstream>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
 #include <sys/wait.h>
@@ -14,127 +14,190 @@
 #include <unordered_map>
 #include <algorithm>
 #include <lua.hpp>
+#include <cstdlib>
+#include <regex>
 
 #define MAX_INPUT 255
 
 using namespace std;
 
-// Global variables to store active plugins and theme settings
-
-// List of active plugin filenames
-vector<string> active_plugins; 
-
-// Key-value pairs for theme settings
+// Global variables
+vector<string> active_plugins;
 unordered_map<string, string> theme_settings;
+string home_dir;
+lua_State *L = nullptr;
 
-// Function to get the hostname of the system
-string hostname() { 
+/**
+ * @brief Converts hex color code to ANSI escape sequence
+ */
+string hex_to_ansi(const string& hex) {
+    string clean_hex = hex;
+    if (hex[0] == '#') {
+        clean_hex = hex.substr(1);
+    }
+
+    // Convert hex to RGB
+    if (clean_hex.length() == 6) {
+        int r, g, b;
+        sscanf(clean_hex.c_str(), "%02x%02x%02x", &r, &g, &b);
+        return "\033[38;2;" + to_string(r) + ";" + to_string(g) + ";" + to_string(b) + "m";
+    }
+
+    // Return default if invalid
+    return "\033[0m";
+}
+
+/**
+ * @brief Gets the user's home directory
+ */
+string get_home_dir() {
+    const char* home = getenv("HOME");
+    return home ? string(home) : "";
+}
+
+/**
+ * @brief Returns the hostname of the system
+ */
+string get_hostname() {
     char hostbuffer[HOST_NAME_MAX];
     if (gethostname(hostbuffer, sizeof(hostbuffer)) == 0) {
         return std::string(hostbuffer);
     } else {
-        // Return empty string on error
-        return ""; 
+        return "unknown";
     }
 }
-// Hostname of the system
-string host_name = hostname(); 
 
 /**
- * @brief Loads the configuration file (~/.zencr/config) to initialize plugins and theme settings.
+ * @brief Initializes the Lua environment
  */
+bool init_lua() {
+    L = luaL_newstate();
+    if (!L) return false;
 
+    luaL_openlibs(L);
+    return true;
+}
+
+/**
+ * @brief Loads the configuration file using Lua
+ */
 void load_config() {
-    ifstream config("~/.zencr/config");
-    if (!config) {
-        cerr << "Could not open config file." << endl;
+    if (!L) {
+        cerr << "Lua environment not initialized" << endl;
         return;
     }
 
-    string line;
-    while (getline(config, line)) {
-        // Parse lines starting with "plugin:" to load plugins
-        if (line.rfind("plugin:", 0) == 0) {
-            active_plugins.push_back(line.substr(7));
-        }
-        // Parse lines starting with "theme:" to load theme settings
-        else if (line.rfind("theme:", 0) == 0) {
-            size_t delimiter = line.find('=');
-            if (delimiter != string::npos) {
-                theme_settings[line.substr(6, delimiter - 6)] = line.substr(delimiter + 1);
+    string config_path = home_dir + "/.zencr/config.lua";
+
+    if (luaL_dofile(L, config_path.c_str())) {
+        cerr << "Error loading config: " << lua_tostring(L, -1) << endl;
+        lua_pop(L, 1);
+        return;
+    }
+
+    // Get plugins table
+    lua_getglobal(L, "plugins");
+    if (lua_istable(L, -1)) {
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0) {
+            if (lua_isstring(L, -1)) {
+                active_plugins.push_back(lua_tostring(L, -1));
             }
+            lua_pop(L, 1);
         }
     }
-    config.close();
+    lua_pop(L, 1);
+
+    // Get theme settings
+    lua_getglobal(L, "theme");
+    if (lua_istable(L, -1)) {
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0) {
+            if (lua_isstring(L, -2) && lua_isstring(L, -1)) {
+                theme_settings[lua_tostring(L, -2)] = lua_tostring(L, -1);
+            }
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
 }
 
 /**
- * @brief Loads Lua plugins from the ~/.zencr/plugins directory.
- *        Only plugins listed in the active_plugins vector are loaded.
+ * @brief Loads Lua plugins
  */
-
 void load_plugins() {
-    lua_State *L = luaL_newstate();
-    luaL_openlibs(L);              
+    if (!L) {
+        cerr << "Lua environment not initialized" << endl;
+        return;
+    }
 
-    DIR *dir = opendir("~/.zencr/plugins");
+    string plugins_dir = home_dir + "/.zencr/plugins";
+
+    DIR *dir = opendir(plugins_dir.c_str());
     if (!dir) {
-        cerr << "Could not open plugins directory." << endl;
+        cerr << "Could not open plugins directory: " << plugins_dir << endl;
         return;
     }
 
     struct dirent *entry;
     while ((entry = readdir(dir))) {
         string name = entry->d_name;
-        // Check if the file is a Lua script and is listed in active_plugins
-        if (name.rfind(".lua") == name.size() - 4) {
+        if (name.length() > 4 && name.substr(name.length() - 4) == ".lua") {
+            // Check if this plugin is active
             if (find(active_plugins.begin(), active_plugins.end(), name) != active_plugins.end()) {
-                string path = "~/.zencr/plugins/" + name;
-                // Execute the Lua script
+                string path = plugins_dir + "/" + name;
                 if (luaL_dofile(L, path.c_str())) {
-                    cerr << "Error loading plugin: " << lua_tostring(L, -1) << endl;
-                    lua_pop(L, 1); // Remove error message from the stack
+                    cerr << "Error loading plugin " << name << ": " << lua_tostring(L, -1) << endl;
+                    lua_pop(L, 1);
+                } else {
+                    cout << "Loaded plugin: " << name << endl;
                 }
             }
         }
     }
     closedir(dir);
-    lua_close(L); 
 }
 
 /**
- * @brief Applies the theme settings to the shell prompt.
- *        Currently supports setting the prompt colors HEX format.
+ * @brief Generates the prompt string based on theme settings
  */
+string generate_prompt() {
+    string username = getenv("USER") ? getenv("USER") : "unknown";
+    string hostname = get_hostname();
 
-void apply_theme() {
-    if (theme_settings.count("prompt_color")) {
-        cout << "\033[" << theme_settings["prompt_color"] << "m";
-    }
-}
-
-/**
- * @brief Prints the shell prompt with the current user and working directory.
- */
-
-void print_prompt() {
-    // Get the current hostname and working directory
-    char *user = host_name; 
     char dir[MAX_INPUT];
-    getcwd(dir, MAX_INPUT); 
-    // Apply theme settings
-    apply_theme(); 
-    cout << (user ? user : "unknown") << "@" << dir << " -/ $ \033[0m"; // Print the prompt
-    fflush(stdout);
+    getcwd(dir, MAX_INPUT);
+
+    // Convert home directory to tilde
+    string pwd(dir);
+    if (pwd.find(home_dir) == 0) {
+        pwd = "~" + pwd.substr(home_dir.length());
+    }
+
+    // Apply theme
+    string prompt_color = theme_settings.count("prompt_color") ?
+                          hex_to_ansi(theme_settings["prompt_color"]) :
+                          "\033[34m"; // Default blue
+
+    string reset_color = "\033[0m";
+
+    // Format the prompt (customize as you wish)
+    string prompt_format = theme_settings.count("prompt_format") ?
+                          theme_settings["prompt_format"] :
+                          "[%u@%h %d]$ ";
+
+    // Replace placeholders in prompt format
+    string prompt = prompt_format;
+    prompt = regex_replace(prompt, regex("%u"), username);
+    prompt = regex_replace(prompt, regex("%h"), hostname);
+    prompt = regex_replace(prompt, regex("%d"), pwd);
+
+    return prompt_color + prompt + reset_color;
 }
 
 /**
- * @brief Tokenizes the input string into a vector of arguments.
- * 
- * @param input The input string to tokenize.
- * @return A vector of strings representing the tokens.
+ * @brief Tokenizes the input string
  */
-
 vector<string> tokenize(const string &input) {
     vector<string> args;
     istringstream stream(input);
@@ -146,56 +209,107 @@ vector<string> tokenize(const string &input) {
 }
 
 /**
- * @brief Executes a shell command. Supports built-in commands like `cd` and `exit`.
- *        For other commands, it forks a child process to execute the command.
- * 
- * @param args A vector of strings representing the command and its arguments.
+ * @brief Executes a shell command
  */
-
 void execute_command(vector<string> args) {
-    if (args.empty()) return; // No command to execute
+    if (args.empty()) return;
 
-    // Handle the `cd` command
+    // Handle built-in commands
     if (args[0] == "cd") {
         if (args.size() < 2) {
-            cerr << "cd: missing argument" << endl;
+            // Change to home directory if no argument
+            if (chdir(home_dir.c_str()) != 0) {
+                perror("cd");
+            }
         } else if (chdir(args[1].c_str()) != 0) {
             perror("cd");
         }
         return;
     }
 
-    // Handle the `exit` command
-    if (args[0] == "exit") {
+    if (args[0] == "exit" || args[0] == "quit") {
         cout << "Goodbye!" << endl;
         exit(0);
     }
 
-    // Fork a child process to execute other commands
+    // Execute Lua functions if registered by plugins
+    if (L) {
+        lua_getglobal(L, "execute_command");
+        if (lua_isfunction(L, -1)) {
+            lua_newtable(L);
+            for (size_t i = 0; i < args.size(); i++) {
+                lua_pushstring(L, args[i].c_str());
+                lua_rawseti(L, -2, i+1);
+            }
+
+            if (lua_pcall(L, 1, 1, 0) != 0) {
+                cerr << "Error executing Lua command handler: " << lua_tostring(L, -1) << endl;
+                lua_pop(L, 1);
+            } else if (lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
+                // Command was handled by Lua
+                lua_pop(L, 1);
+                return;
+            }
+            lua_pop(L, 1);
+        } else {
+            lua_pop(L, 1);
+        }
+    }
+
+    // Fork and execute system command
     pid_t pid = fork();
     if (pid == 0) {
-        // In the child process
+        // Child process
         vector<char*> c_args;
         for (auto &arg : args) c_args.push_back(&arg[0]);
         c_args.push_back(nullptr);
-        execvp(c_args[0], c_args.data()); // Execute the command
-        perror("exec"); // If execvp fails
+
+        execvp(c_args[0], c_args.data());
+        perror("exec");
         exit(1);
     } else if (pid > 0) {
-        // In the parent process, wait for the child to finish
-        wait(nullptr);
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);
     } else {
-        perror("fork"); // If fork fails
+        perror("fork");
     }
 }
 
 /**
- * @brief The main function of the Zen Shell.
- *        Initializes the shell, loads configuration and plugins, and starts the command loop.
+ * @brief Main function
  */
-
 int main() {
     cout << "Welcome to Zen Shell!" << endl;
+
+    // Get home directory
+    home_dir = get_home_dir();
+    if (home_dir.empty()) {
+        cerr << "Could not determine home directory" << endl;
+        return 1;
+    }
+
+    // Initialize Lua
+    if (!init_lua()) {
+        cerr << "Failed to initialize Lua environment" << endl;
+        return 1;
+    }
+
+    // Create config directory if it doesn't exist
+    string config_dir = home_dir + "/.zencr";
+    string plugins_dir = config_dir + "/plugins";
+
+    // This is a simple check, in production you'd want to create these directories if missing
+    if (access(config_dir.c_str(), F_OK) != 0) {
+        cerr << "Config directory not found: " << config_dir << endl;
+        cout << "Creating config directory..." << endl;
+        mkdir(config_dir.c_str(), 0755);
+    }
+
+    if (access(plugins_dir.c_str(), F_OK) != 0) {
+        cout << "Creating plugins directory..." << endl;
+        mkdir(plugins_dir.c_str(), 0755);
+    }
 
     // Load configuration and plugins
     load_config();
@@ -203,19 +317,24 @@ int main() {
 
     // Main command loop
     while (true) {
+        string prompt = generate_prompt();
+
         // Read user input
-        char *input = readline((host_name + "> ").c_str()); 
-        // Exit on EOF
-        if (!input) break; 
-         // Add input to history if not empty
+        char *input = readline(prompt.c_str());
+
+        if (!input) break; // Exit on EOF
+
         if (*input) add_history(input);
-         // Tokenize the input
-        vector<string> args = tokenize(input);
-        // Free the allocated memory for input
-        free(input); 
-        // Execute the command
-        execute_command(args); 
+
+        string cmd(input);
+        free(input);
+
+        vector<string> args = tokenize(cmd);
+        execute_command(args);
     }
+
+    // Clean up
+    if (L) lua_close(L);
 
     return 0;
 }
