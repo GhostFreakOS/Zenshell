@@ -33,21 +33,23 @@ zen
 
 The config file is located at `~/.zencr/config.lua`. You can specify:  
 - **Enabled plugins**:  
-  ```lua
+```lua
   -- List of active plugins
 plugins = {
     "welcome.lua",
     "git_status.lua"
-}```  
+}
+```  
 
 - **Theming options**:  
-  ```lua  
+ ```lua  
   -- Theme settings
 theme = {
     prompt_color = "#4287f5",     -- Blue prompt (hex format)
     background = "#000000",       -- Black background (hex format)
     prompt_format = "[%u@%h %d]$ " -- Format: [username@hostname directory]$
-}   ```
+}   
+```
   
 - **Custom Settings**:
 ```lua
