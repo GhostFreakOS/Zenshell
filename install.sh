@@ -23,7 +23,7 @@ done
 set -e # Re-enable exit on error
 
 # Create necessary directories
-mkdir -p ~/.zencr/plugins ~/.zencr/themes
+mkdir -p ~/.zencr/plugins ~/.zencr/config
 
 # Compile Zen Shell
 echo "Compiling Zen Shell..."
