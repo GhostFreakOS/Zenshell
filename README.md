@@ -4,7 +4,7 @@
 
 ## 🚀 Features  
 - **Cross-platform**: Works on Arch Linux, Debian, Void, Fedora, OpenSUSE, and more.  
-- **Plugin System**: Load only the plugins you need via `~/.zencr/config`.  
+- **Plugin System**: Load only the plugins you need via `~/.zencr/config.lua`.  
 - **Theming Support**: Customize colors and prompt styles easily.  
 - **Zsh-like Power**: Autocompletion, syntax highlighting, and a powerful history system.  
 - **Built for Performance**: Optimized with modern C++ for speed and efficiency.  
