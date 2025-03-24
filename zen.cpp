@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <cstring>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <dlfcn.h>
@@ -277,10 +278,20 @@ void execute_command(vector<string> args) {
 }
 
 /**
+ * @brief helper 
+ */
+void handle_sigint(int sig) {
+    cout << "\nUse the 'exit' command to quit the shell." << endl;
+}
+
+/**
  * @brief Main function
  */
 int main() {
     cout << "Welcome to Zen Shell!" << endl;
+    
+    // Set up signal handler for SIGINT
+    signal(SIGINT, handle_sigint);
 
     // Get home directory
     home_dir = get_home_dir();
