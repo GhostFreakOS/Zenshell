@@ -40,7 +40,7 @@ done
 set -e # Re-enable exit on error
 
 # Create necessary directories
-mkdir -p ~/.zencr/plugins ~/.zencr/config
+mkdir -p ~/.zencr/plugins ~/.zencr
 
 # Compile Zen Shell
 echo -e "${GREEN}Compiling Zen Shell...${RESET}"
