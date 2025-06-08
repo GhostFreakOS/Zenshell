@@ -1,0 +1,2 @@
+/usr/local/bin/zenshell
+/usr/local/share/zencr/plugins/autosuggest.lua

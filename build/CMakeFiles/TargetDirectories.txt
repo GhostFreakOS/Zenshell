@@ -1,0 +1,7 @@
+/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/zenshell.dir
+/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/edit_cache.dir
+/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/rebuild_cache.dir
+/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/list_install_components.dir
+/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/install.dir
+/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/install/local.dir
+/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/install/strip.dir
