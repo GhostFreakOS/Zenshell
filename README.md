@@ -70,3 +70,62 @@ Zen Shell Also Support Lua programming luangauge in it
 sudo rm /bin/zen  
 rm -rf ~/.zencr  
 ```
+
+## Dependencies
+
+- C++17 compatible compiler
+- CMake 3.10 or higher
+- Readline library
+- Lua 5.1 or higher
+
+## Building
+
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
+
+## Installation
+
+```bash
+sudo make install
+```
+
+## Configuration
+
+The shell looks for configuration in `~/.zencr/config.lua`. Here's an example configuration:
+
+```lua
+-- Active plugins
+plugins = {
+    "example.lua"
+}
+
+-- Theme settings
+theme = {
+    prompt_color = "#3498db",
+    prompt_format = "[%u@%h %d]$ "
+}
+```
+
+## Plugin Development
+
+Plugins are written in Lua and should be placed in `~/.zencr/plugins/`. Each plugin should implement an `execute_command` function that returns true if it handled the command.
+
+Example plugin:
+
+```lua
+function execute_command(args)
+    if args[1] == "hello" then
+        print("Hello, World!")
+        return true
+    end
+    return false
+end
+```
+
+## License
+
+MIT License
