@@ -19,41 +19,117 @@ ${RED}███████╗███████╗███╗   ██╗
 echo -e "$zen_ascii"
 echo -e "${GREEN}Installing Zen Shell...${RESET}"
 
-set +e # Disable exit on error
-
-# Install dependencies
-deps=("g++" "make" "libreadline-dev" "readline-devel" "readline" "libdl" "liblua5.4-dev")
-for dep in "${deps[@]}"; do
-    if ! dpkg -s $dep &>/dev/null && ! command -v $dep &>/dev/null; then
-        echo -e "${YELLOW}Installing dependency: $dep${RESET}"
-        sudo apt-get update -y &>/dev/null
-        sudo apt-get install -y $dep &>/dev/null || \
-        sudo pacman -S --noconfirm $dep &>/dev/null || \
-        sudo dnf install -y $dep &>/dev/null || \
-        sudo xbps-install -y $dep &>/dev/null || \
-        sudo zypper install -y $dep &>/dev/null || \
-        sudo homebrew install $dep &>/dev/null || \
-        sudo pkg install -y $dep &>/dev/null
-    fi
-done
-
-set -e # Re-enable exit on error
-
-# Create necessary directories
-mkdir -p ~/.zencr/plugins ~/.zencr
-
-# Compile Zen Shell
-echo -e "${GREEN}Compiling Zen Shell...${RESET}"
-if ! g++ -o zen zen.cpp -lreadline -ldl -llua &>/dev/null; then
-    echo -e "${RED}Compilation failed. Please check your environment and dependencies.${RESET}"
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then 
+    echo -e "${RED}Please run as root or with sudo${RESET}"
     exit 1
 fi
 
-# Move the binary to /bin
-echo -e "${GREEN}Installing Zen Shell binary...${RESET}"
-if sudo mv zen /bin/zen &>/dev/null; then
-    sudo chmod +x /bin/zen
-    echo -e "${GREEN}Zen Shell installed successfully! Run 'zen' to start.${RESET}"
-else
-    echo -e "${RED}Failed to move Zen Shell binary to /bin. Please check your permissions.${RESET}"
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to install package
+install_package() {
+    if ! dpkg -l | grep -q "^ii  $1"; then
+        echo -e "${YELLOW}Installing $1...${RESET}"
+        apt-get install -y "$1" >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Failed to install $1${RESET}"
+            exit 1
+        fi
+    fi
+}
+
+# Update package list
+echo -e "${GREEN}Updating package lists...${RESET}"
+apt-get update >/dev/null 2>&1
+
+# Install required dependencies
+echo -e "${GREEN}Installing dependencies...${RESET}"
+DEPS=(
+    "build-essential"
+    "cmake"
+    "libreadline-dev"
+    "liblua5.1-0-dev"
+    "pkg-config"
+    "git"
+)
+
+for dep in "${DEPS[@]}"; do
+    install_package "$dep"
+done
+
+# Create build directory
+echo -e "${GREEN}Creating build directory...${RESET}"
+mkdir -p build
+cd build
+
+# Configure with CMake
+echo -e "${GREEN}Configuring with CMake...${RESET}"
+cmake .. || {
+    echo -e "${RED}CMake configuration failed${RESET}"
+    exit 1
+}
+
+# Build
+echo -e "${GREEN}Building Zen Shell...${RESET}"
+make -j$(nproc) || {
+    echo -e "${RED}Build failed${RESET}"
+    exit 1
+}
+
+# Install
+echo -e "${GREEN}Installing Zen Shell...${RESET}"
+make install || {
+    echo -e "${RED}Installation failed${RESET}"
+    exit 1
+}
+
+# Create config directory structure
+echo -e "${GREEN}Setting up configuration...${RESET}"
+CONFIG_DIR="/etc/zencr"
+mkdir -p "$CONFIG_DIR/plugins"
+
+# Copy default configuration if it doesn't exist
+if [ ! -f "$CONFIG_DIR/config.lua" ]; then
+    cp ../config.lua "$CONFIG_DIR/"
 fi
+
+# Copy plugins
+cp -r ../plugins/* "$CONFIG_DIR/plugins/"
+
+# Set permissions
+chown -R root:root "$CONFIG_DIR"
+chmod -R 755 "$CONFIG_DIR"
+
+# Create user config directory
+for USER_HOME in /home/*; do
+    if [ -d "$USER_HOME" ]; then
+        USER=$(basename "$USER_HOME")
+        USER_CONFIG_DIR="$USER_HOME/.zencr"
+        
+        # Create user config directory if it doesn't exist
+        mkdir -p "$USER_CONFIG_DIR/plugins"
+        
+        # Copy config file if it doesn't exist
+        if [ ! -f "$USER_CONFIG_DIR/config.lua" ]; then
+            cp "$CONFIG_DIR/config.lua" "$USER_CONFIG_DIR/"
+        fi
+        
+        # Set ownership
+        chown -R "$USER:$USER" "$USER_CONFIG_DIR"
+    fi
+done
+
+echo -e "${GREEN}Installation complete!${RESET}"
+echo -e "${YELLOW}You can now run 'zenshell' to start the shell${RESET}"
+echo -e "${YELLOW}Configuration files are located in ~/.zencr/${RESET}"
+echo -e "${YELLOW}System-wide configuration is in /etc/zencr/${RESET}"
+
+# Cleanup
+cd ..
+rm -rf build
+
+exit 0
