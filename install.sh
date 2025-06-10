@@ -24,101 +24,58 @@ log_error() {
     echo -e "${RED}[ERROR]${RESET} $1"
 }
 
-log_debug() {
-    if [ "${DEBUG}" = "true" ]; then
-        echo -e "[DEBUG] $1"
-    fi
-}
-
-# Create log file
-LOG_FILE="/tmp/zenshell_install.log"
-exec 3>&1 4>&2
-trap 'exec 2>&4 1>&3' 0 1 2 3
-exec 1>>${LOG_FILE} 2>&1
-
 # ASCII Art
-zen_ascii="
-${RED}███████╗███████╗███╗   ██╗
+echo -e "${RED}
+███████╗███████╗███╗   ██╗
 ╚══███╔╝██╔════╝████╗  ██║
   ███╔╝ █████╗  ██╔██╗ ██║
  ███╔╝  ██╔══╝  ██║╚██╗██║
 ███████╗███████╗██║ ╚████║
-╚══════╝╚══════╝╚═╝  ╚═══╝${RESET}
-"
-
-echo -e "$zen_ascii" >&3
-log_info "Starting Zen Shell installation..." >&3
+╚══════╝╚══════╝╚═╝  ╚═══╝${RESET}"
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
-    log_error "This script must be run as root or with sudo" >&3
+    log_error "Please run as root or with sudo"
     exit 1
 fi
 
-# Function to check if a command exists
-command_exists() {
-    if ! command -v "$1" >/dev/null 2>&1; then
-        log_error "Required command '$1' not found" >&3
+# Create log file
+LOG_FILE="/tmp/zenshell_install.log"
+exec 1> >(tee -a "$LOG_FILE") 2>&1
+
+log_info "Starting Zen Shell installation..."
+
+# Check system requirements
+check_system_requirements() {
+    log_info "Checking system requirements..."
+    
+    # Check disk space (500MB required)
+    local free_space=$(df -m . | awk 'NR==2 {print $4}')
+    if [ "${free_space}" -lt 500 ]; then
+        log_error "Insufficient disk space. Required: 500MB, Available: ${free_space}MB"
         return 1
     fi
+
+    # Check RAM (256MB required)
+    local total_ram=$(free -m | awk '/Mem:/ {print $2}')
+    if [ "${total_ram}" -lt 256 ]; then
+        log_error "Insufficient RAM. Required: 256MB, Available: ${total_ram}MB"
+        return 1
+    fi
+
+    log_success "System requirements met"
     return 0
 }
 
-# Function to verify system requirements
-check_system_requirements() {
-    log_info "Checking system requirements..." >&3
-    
-    # Check for minimum required disk space (500MB)
-    local free_space=$(df -m . | awk 'NR==2 {print $4}')
-    if [ "${free_space}" -lt 500 ]; then
-        log_error "Insufficient disk space. Required: 500MB, Available: ${free_space}MB" >&3
-        return 1
-    fi
-
-    # Check for minimum RAM (256MB)
-    local total_ram=$(free -m | awk '/Mem:/ {print $2}')
-    if [ "${total_ram}" -lt 256 ]; then
-        log_error "Insufficient RAM. Required: 256MB, Available: ${total_ram}MB" >&3
+# Install required packages
+install_dependencies() {
+    log_info "Updating package lists..."
+    apt-get update || {
+        log_error "Failed to update package lists"
         return 1
     }
 
-    return 0
-}
-
-# Function to install package with detailed error reporting
-install_package() {
-    local package_name="$1"
-    log_info "Installing package: ${package_name}" >&3
-
-    if ! dpkg -l | grep -q "^ii  $package_name"; then
-        apt-get install -y "$package_name" 2>&1 | tee -a "${LOG_FILE}"
-        if [ ${PIPESTATUS[0]} -ne 0 ]; then
-            log_error "Failed to install ${package_name}. Check ${LOG_FILE} for details" >&3
-            log_error "Last 5 lines of error:" >&3
-            tail -n 5 "${LOG_FILE}" >&3
-            return 1
-        fi
-        log_success "Successfully installed ${package_name}" >&3
-    else
-        log_info "Package ${package_name} is already installed" >&3
-    fi
-    return 0
-}
-
-# Update package list with error checking
-update_package_list() {
-    log_info "Updating package lists..." >&3
-    if ! apt-get update 2>&1 | tee -a "${LOG_FILE}"; then
-        log_error "Failed to update package lists. Check ${LOG_FILE} for details" >&3
-        return 1
-    fi
-    return 0
-}
-
-# Install dependencies with detailed reporting
-install_dependencies() {
-    log_info "Installing dependencies..." >&3
-    
+    log_info "Installing dependencies..."
     local DEPS=(
         "build-essential"
         "cmake"
@@ -128,88 +85,85 @@ install_dependencies() {
         "git"
     )
 
-    local failed_deps=()
     for dep in "${DEPS[@]}"; do
-        if ! install_package "$dep"; then
-            failed_deps+=("$dep")
+        log_info "Installing ${dep}..."
+        if ! apt-get install -y "$dep"; then
+            log_error "Failed to install ${dep}"
+            return 1
         fi
     done
 
-    if [ ${#failed_deps[@]} -ne 0 ]; then
-        log_error "Failed to install the following dependencies:" >&3
-        printf '%s\n' "${failed_deps[@]}" >&3
-        return 1
-    fi
-
+    log_success "All dependencies installed successfully"
     return 0
 }
 
-# Configure and build with CMake
+# Build project
 build_project() {
-    log_info "Creating build directory..." >&3
+    log_info "Creating build directory..."
     mkdir -p build || {
-        log_error "Failed to create build directory" >&3
+        log_error "Failed to create build directory"
         return 1
     }
     cd build
 
-    log_info "Configuring with CMake..." >&3
-    if ! cmake .. 2>&1 | tee -a "${LOG_FILE}"; then
-        log_error "CMake configuration failed. Check ${LOG_FILE} for details" >&3
+    log_info "Configuring with CMake..."
+    if ! cmake ..; then
+        log_error "CMake configuration failed"
         cd ..
         return 1
     fi
 
-    log_info "Building Zen Shell..." >&3
-    if ! make -j$(nproc) 2>&1 | tee -a "${LOG_FILE}"; then
-        log_error "Build failed. Check ${LOG_FILE} for details" >&3
+    log_info "Building Zen Shell..."
+    if ! make -j$(nproc); then
+        log_error "Build failed"
         cd ..
         return 1
     fi
 
+    log_success "Build completed successfully"
     cd ..
     return 0
 }
 
-# Install the built files
-install_files() {
-    log_info "Installing Zen Shell..." >&3
-    
+# Install the shell
+install_shell() {
+    log_info "Installing Zen Shell..."
     cd build
-    if ! make install 2>&1 | tee -a "${LOG_FILE}"; then
-        log_error "Installation failed. Check ${LOG_FILE} for details" >&3
+    if ! make install; then
+        log_error "Installation failed"
         cd ..
         return 1
-    }
+    fi
     cd ..
 
+    log_success "Installation completed"
     return 0
 }
 
 # Setup configuration
 setup_configuration() {
-    log_info "Setting up configuration..." >&3
+    log_info "Setting up configuration..."
     
+    # Create system-wide config directory
     local CONFIG_DIR="/etc/zencr"
     local PLUGINS_DIR="${CONFIG_DIR}/plugins"
-
-    # Create system directories
-    mkdir -p "${CONFIG_DIR}" "${PLUGINS_DIR}" || {
-        log_error "Failed to create configuration directories" >&3
+    
+    mkdir -p "${CONFIG_DIR}/plugins" || {
+        log_error "Failed to create configuration directories"
         return 1
     }
 
     # Copy configuration files
     if [ ! -f "${CONFIG_DIR}/config.lua" ]; then
-        cp config.lua "${CONFIG_DIR}/" 2>&1 | tee -a "${LOG_FILE}" || {
-            log_error "Failed to copy config.lua" >&3
+        cp config.lua "${CONFIG_DIR}/" || {
+            log_error "Failed to copy config.lua"
             return 1
         }
     fi
 
     # Copy plugins
-    cp -r plugins/* "${PLUGINS_DIR}/" 2>&1 | tee -a "${LOG_FILE}" || {
-        log_error "Failed to copy plugins" >&3
+    cp -r plugins/* "${CONFIG_DIR}/plugins/" || {
+        log_error "Failed to copy plugins"
         return 1
     }
 
@@ -220,28 +174,17 @@ setup_configuration() {
     # Setup user configurations
     for USER_HOME in /home/*; do
         if [ -d "${USER_HOME}" ]; then
-            local USER=$(basename "${USER_HOME}")
-            local USER_CONFIG_DIR="${USER_HOME}/.zencr"
+            USER=$(basename "${USER_HOME}")
+            USER_CONFIG_DIR="${USER_HOME}/.zencr"
             
-            mkdir -p "${USER_CONFIG_DIR}/plugins" || {
-                log_error "Failed to create user config directory for ${USER}" >&3
-                continue
-            }
-            
-            if [ ! -f "${USER_CONFIG_DIR}/config.lua" ]; then
-                cp "${CONFIG_DIR}/config.lua" "${USER_CONFIG_DIR}/" || {
-                    log_error "Failed to copy config for user ${USER}" >&3
-                    continue
-                }
-            fi
-            
-            chown -R "${USER}:${USER}" "${USER_CONFIG_DIR}" || {
-                log_error "Failed to set permissions for user ${USER}" >&3
-                continue
-            }
+            mkdir -p "${USER_CONFIG_DIR}/plugins"
+            cp -n "${CONFIG_DIR}/config.lua" "${USER_CONFIG_DIR}/"
+            cp -r "${CONFIG_DIR}/plugins/"* "${USER_CONFIG_DIR}/plugins/"
+            chown -R "${USER}:${USER}" "${USER_CONFIG_DIR}"
         fi
     done
 
+    log_success "Configuration setup completed"
     return 0
 }
 
@@ -249,33 +192,28 @@ setup_configuration() {
 main() {
     local start_time=$(date +%s)
 
-    # Check system requirements
+    # Run installation steps
     check_system_requirements || exit 1
-
-    # Update and install dependencies
-    update_package_list || exit 1
     install_dependencies || exit 1
-
-    # Build and install
     build_project || exit 1
-    install_files || exit 1
+    install_shell || exit 1
     setup_configuration || exit 1
 
     # Cleanup
-    log_info "Cleaning up..." >&3
+    log_info "Cleaning up..."
     rm -rf build
 
+    # Calculate installation time
     local end_time=$(date +%s)
     local duration=$((end_time - start_time))
 
-    log_success "Installation completed successfully in ${duration} seconds!" >&3
-    log_info "You can now run 'zenshell' to start the shell" >&3
-    log_info "Configuration files are located in ~/.zencr/" >&3
-    log_info "System-wide configuration is in /etc/zencr/" >&3
-    log_info "Installation log is available at: ${LOG_FILE}" >&3
+    # Final success message
+    log_success "Installation completed successfully in ${duration} seconds!"
+    log_info "You can now run 'zenshell' to start the shell"
+    log_info "Configuration files are located in ~/.zencr/"
+    log_info "System-wide configuration is in /etc/zencr/"
+    log_info "Installation log is available at: ${LOG_FILE}"
 }
 
-# Run main installation
+# Start installation
 main
-
-exit 0
