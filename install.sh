@@ -99,29 +99,40 @@ install_dependencies() {
 
 # Build project
 build_project() {
+    log_info "Cleaning previous build artifacts..."
+    rm -rf build
+    
     log_info "Creating build directory..."
     mkdir -p build || {
         log_error "Failed to create build directory"
         return 1
     }
-    cd build
+    
+    # Get absolute paths
+    BUILD_DIR="$(cd build && pwd)"
+    SOURCE_DIR="$(pwd)"
+    
+    cd "${BUILD_DIR}" || {
+        log_error "Failed to change to build directory"
+        return 1
+    }
 
     log_info "Configuring with CMake..."
-    if ! cmake ..; then
+    if ! cmake -B "${BUILD_DIR}" -S "${SOURCE_DIR}"; then
         log_error "CMake configuration failed"
-        cd ..
+        cd "${SOURCE_DIR}"
         return 1
     fi
 
     log_info "Building Zen Shell..."
     if ! make -j$(nproc); then
         log_error "Build failed"
-        cd ..
+        cd "${SOURCE_DIR}"
         return 1
     fi
 
     log_success "Build completed successfully"
-    cd ..
+    cd "${SOURCE_DIR}"
     return 0
 }
 
