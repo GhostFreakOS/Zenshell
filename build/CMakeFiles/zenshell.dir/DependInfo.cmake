@@ -8,9 +8,9 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/src/main.cpp" "CMakeFiles/zenshell.dir/src/main.cpp.o" "gcc" "CMakeFiles/zenshell.dir/src/main.cpp.o.d"
-  "/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/src/shell.cpp" "CMakeFiles/zenshell.dir/src/shell.cpp.o" "gcc" "CMakeFiles/zenshell.dir/src/shell.cpp.o.d"
-  "/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/src/theme.cpp" "CMakeFiles/zenshell.dir/src/theme.cpp.o" "gcc" "CMakeFiles/zenshell.dir/src/theme.cpp.o.d"
+  "/home/ghostty/Zenshell/src/main.cpp" "CMakeFiles/zenshell.dir/src/main.cpp.o" "gcc" "CMakeFiles/zenshell.dir/src/main.cpp.o.d"
+  "/home/ghostty/Zenshell/src/shell.cpp" "CMakeFiles/zenshell.dir/src/shell.cpp.o" "gcc" "CMakeFiles/zenshell.dir/src/shell.cpp.o.d"
+  "/home/ghostty/Zenshell/src/theme.cpp" "CMakeFiles/zenshell.dir/src/theme.cpp.o" "gcc" "CMakeFiles/zenshell.dir/src/theme.cpp.o.d"
   "" "zenshell" "gcc" "CMakeFiles/zenshell.dir/link.d"
   )
 

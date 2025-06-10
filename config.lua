@@ -1,18 +1,22 @@
--- Zen Shell Configuration
+-- Default configuration for Zen Shell
 
--- Active plugins
+-- List of active plugins
 plugins = {
-    "autosuggest.lua"
+    "ghost-prompt.lua",
+    "autosuggest.lua",
+    "syntax-highlighting.lua",
+    "git-prompt.lua"
 }
 
 -- Theme settings
 theme = {
-    prompt_color = "#3498db",  -- Blue color
-    prompt_format = "[%u@%h %d]$ "
+    prompt_color = "#4287f5",     -- Blue prompt (hex format)
+    background = "#000000",       -- Black background (hex format)
+    prompt_format = "[%u@%h %d]$ " -- Format: [username@hostname directory]$
 }
 
--- Shell settings
+-- Custom shell settings
 settings = {
     history_size = 1000,
-    enable_autosuggestions = true
+    auto_complete = true
 } 

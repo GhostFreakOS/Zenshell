@@ -223,16 +223,38 @@ void Shell::run() {
     load_plugins();
 
     while (true) {
-        std::string username = getenv("USER") ? getenv("USER") : "unknown";
-        std::string hostname = get_hostname();
-        char dir[MAX_INPUT];
-        getcwd(dir, MAX_INPUT);
-        std::string pwd(dir);
-        if (pwd.find(home_dir) == 0) {
-            pwd = "~" + pwd.substr(home_dir.length());
+        std::string prompt;
+        
+        // Try to get prompt from plugin
+        if (L) {
+            lua_getglobal(L, "get_prompt");
+            if (lua_isfunction(L, -1)) {
+                if (lua_pcall(L, 0, 1, 0) == 0) {
+                    if (lua_isstring(L, -1)) {
+                        prompt = lua_tostring(L, -1);
+                    }
+                    lua_pop(L, 1);
+                } else {
+                    lua_pop(L, 1);
+                }
+            } else {
+                lua_pop(L, 1);
+            }
+        }
+        
+        // Fallback to default prompt if plugin prompt is not available
+        if (prompt.empty()) {
+            std::string username = getenv("USER") ? getenv("USER") : "unknown";
+            std::string hostname = get_hostname();
+            char dir[MAX_INPUT];
+            getcwd(dir, MAX_INPUT);
+            std::string pwd(dir);
+            if (pwd.find(home_dir) == 0) {
+                pwd = "~" + pwd.substr(home_dir.length());
+            }
+            prompt = Theme::generate_prompt(username, hostname, pwd, theme_settings);
         }
 
-        std::string prompt = Theme::generate_prompt(username, hostname, pwd, theme_settings);
         char* input = readline(prompt.c_str());
 
         if (!input) break;

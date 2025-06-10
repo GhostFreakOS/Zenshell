@@ -1,0 +1,28 @@
+#!/bin/sh
+set -e
+
+# Create symbolic link for zensh command
+if [ "$1" = "configure" ]; then
+    ln -sf /usr/bin/zenshell /usr/bin/zensh
+fi
+
+# Add zensh to /etc/shells if not already present
+if ! grep -q "^/usr/bin/zensh$" /etc/shells; then
+    echo "/usr/bin/zensh" >> /etc/shells
+fi
+
+# Set proper permissions
+chmod 755 /usr/bin/zensh
+
+# Create user's config directory and copy default config if it doesn't exist
+for user_home in /home/*; do
+    if [ -d "$user_home" ]; then
+        mkdir -p "$user_home/.zencr/plugins"
+        if [ ! -f "$user_home/.zencr/config.lua" ]; then
+            cp /usr/share/zenshell/config.lua "$user_home/.zencr/config.lua"
+            chown -R $(stat -c '%U:%G' "$user_home") "$user_home/.zencr"
+        fi
+    fi
+done
+
+exit 0 

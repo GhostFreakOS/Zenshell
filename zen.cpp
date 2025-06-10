@@ -14,7 +14,7 @@
 #include <dlfcn.h>
 #include <unordered_map>
 #include <algorithm>
-#include <lua.hpp>
+#include <lua5.3/lua.hpp>
 #include <cstdlib>
 #include <regex>
 

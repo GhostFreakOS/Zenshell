@@ -1,4 +1,4 @@
-# Install script for directory: /home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell
+# Install script for directory: /home/ghostty/Zenshell
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -29,7 +29,7 @@ endif()
 
 # Install shared libraries without execute permission?
 if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
-  set(CMAKE_INSTALL_SO_NO_EXE "0")
+  set(CMAKE_INSTALL_SO_NO_EXE "1")
 endif()
 
 # Is this installation the result of a crosscompile?
@@ -49,7 +49,7 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/zenshell"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE EXECUTABLE FILES "/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/zenshell")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE EXECUTABLE FILES "/home/ghostty/Zenshell/build/zenshell")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/zenshell" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/zenshell")
     if(CMAKE_INSTALL_DO_STRIP)
@@ -59,17 +59,17 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  include("/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/CMakeFiles/zenshell.dir/install-cxx-module-bmi-noconfig.cmake" OPTIONAL)
+  include("/home/ghostty/Zenshell/build/CMakeFiles/zenshell.dir/install-cxx-module-bmi-noconfig.cmake" OPTIONAL)
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/zencr/plugins" TYPE DIRECTORY FILES "/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/plugins/")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/zencr/plugins" TYPE DIRECTORY FILES "/home/ghostty/Zenshell/plugins/")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/install_local_manifest.txt"
+  file(WRITE "/home/ghostty/Zenshell/build/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -85,6 +85,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/home/asaad/Documents/GitHub/Contrubuting/Ghost Freak os/Zenshell/build/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/home/ghostty/Zenshell/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

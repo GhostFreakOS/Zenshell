@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+# Remove zensh symbolic link
+if [ "$1" = "remove" ]; then
+    rm -f /usr/bin/zensh
+fi
+
+# Remove user's config directory if it exists and is empty
+for user_home in /home/*; do
+    if [ -d "$user_home/.zencr" ]; then
+        rmdir "$user_home/.zencr/plugins" 2>/dev/null || true
+        rmdir "$user_home/.zencr" 2>/dev/null || true
+    fi
+done
+
+exit 0 

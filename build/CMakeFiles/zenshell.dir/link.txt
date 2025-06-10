@@ -1,1 +1,1 @@
-/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/zenshell.dir/link.d CMakeFiles/zenshell.dir/src/main.cpp.o CMakeFiles/zenshell.dir/src/shell.cpp.o CMakeFiles/zenshell.dir/src/theme.cpp.o -o zenshell  -lreadline -llua5.1 -lm
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/zenshell.dir/link.d CMakeFiles/zenshell.dir/src/main.cpp.o CMakeFiles/zenshell.dir/src/shell.cpp.o CMakeFiles/zenshell.dir/src/theme.cpp.o -o zenshell  -lreadline -llua5.3

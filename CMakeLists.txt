@@ -10,7 +10,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 # Find required packages
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(READLINE REQUIRED readline)
-pkg_check_modules(LUA REQUIRED lua5.1)
+pkg_check_modules(LUA REQUIRED lua5.3)
 
 # Include directories
 include_directories(

@@ -1,0 +1,13 @@
+Source: zenshell
+Section: shells
+Priority: optional
+Maintainer: GhostFreak <ghostfreak@ghostfreakos.com>
+Build-Depends: debhelper-compat (= 13), cmake, libreadline-dev, liblua5.4-dev
+
+Package: zenshell
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libreadline8, liblua5.4-0
+Description: Zen Shell - A modern shell with Lua scripting support
+ Zen Shell is a modern command-line shell that combines the power of traditional
+ shells with Lua scripting capabilities. It provides an intuitive interface and
+ enhanced functionality for both interactive use and scripting. 
