@@ -4,11 +4,29 @@
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
 RED="\033[0;31m"
+BLUE="\033[0;34m"
 RESET="\033[0m"
 
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${RESET} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${RESET} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${RESET} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${RESET} $1"
+}
+
 # ASCII Art
-zen_ascii="
-${RED}███████╗███████╗███╗   ██╗
+echo -e "${RED}
+███████╗███████╗███╗   ██╗
 ╚══███╔╝██╔════╝████╗  ██║
   ███╔╝ █████╗  ██╔██╗ ██║
  ███╔╝  ██╔══╝  ██║╚██╗██║
@@ -36,8 +54,8 @@ case $OS in
         sudo apt-get install -y g++ make libreadline-dev liblua5.3-dev
         ;;
     "GhostFreakOS")
-        sudo apt-get update
-        sudo apt-get install -y g++ make libreadline-dev liblua5.3-dev
+        sudo pacman -Syu
+        sudo pacman -S --noconfirm gcc make readline lua53
         echo -e "${GREEN}GhostFreakOS detected! Installing dependencies...${RESET}"
         ;;
     "Arch Linux" | "Manjaro Linux")

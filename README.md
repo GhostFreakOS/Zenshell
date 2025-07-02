@@ -11,7 +11,10 @@
 - **Lua plugins Support**: Add Lua Plugins Support 
 
 ## 📥 Installation  
-
+### Wget one script installation
+```
+wget -qO- https://raw.githubusercontent.com/GhostFreakOS/Zenshell/main/install.sh | bash
+```
 ### 1️⃣ Clone the Repository  
 ```sh
 git clone https://github.com/D3f4ult-dev/Zenshell.git
